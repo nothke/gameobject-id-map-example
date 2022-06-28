@@ -31,7 +31,7 @@ struct Scene {
 	static constexpr u32 NULL_ID{ 0 }; // a 0 should map to invalid (the gameobject is removed)
 
 	Scene() {
-		models.reserve(64);
+		models.reserve(12);
 	}
 
 	Model& __GetModelById(u32 id) {
@@ -130,11 +130,11 @@ int main(int argc, char* argv[]) {
 
 	DebugScene(scene);
 
-	return EXIT_SUCCESS;
-
-	scene.Destroy(go2);
-
-	go3.Get().a = 100;
+	for (size_t i = 0; i < 20; i++)
+	{
+		auto _go = scene.Create();
+		_go.Get().a = 200 + i;
+	}
 
 	DebugScene(scene);
 
