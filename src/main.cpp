@@ -14,31 +14,31 @@ struct Scene;
 // Trivially copiable
 struct GameObject {
 	Scene& scene;
-	int id;
+	unsigned int id;
 
 	Model& Get();
 };
 
 struct Scene {
 	std::vector<Model> models;
-	std::map<int, Model*> map;
+	std::map<unsigned int, Model*> map;
 
 	Scene() {
 		models.reserve(64);
 	}
 
-	Model& GetById(int id) {
-		assert(map[id] != nullptr);
-		return *map[id];
+	Model& GetById(unsigned int id) const {
+		assert(map.at(id) != nullptr);
+		return *map.at(id);
 	}
 
 	GameObject Create() {
 		auto& model = models.emplace_back();
 		model.alive = true;
 
-		int index = models.size() - 1;
-		std::cout << index << "\n";
+		unsigned int index = static_cast<unsigned int>(models.size() - 1);
 		map[index] = &model;
+
 		return GameObject{ *this, index };
 	}
 
@@ -90,6 +90,12 @@ int main(int argc, char* argv[]) {
 
 	auto go3 = scene.Create();
 	go3.Get().a = 6;
+
+	for (size_t i = 0; i < 20; i++)
+	{
+		auto _go = scene.Create();
+		_go.Get().a = 100 + i;
+	}
 
 	DebugScene(scene);
 
