@@ -11,70 +11,86 @@ struct Model {
 
 struct Scene;
 
+using u32 = unsigned int;
+
 // Trivially copiable
 struct GameObject {
 	Scene& scene;
-	unsigned int id;
+	u32 id{ 0 }; // maps into the map
 
 	Model& Get();
 };
 
+
 struct Scene {
 	std::vector<Model> models;
-	std::map<unsigned int, Model*> map;
+	std::map<u32, u32> map; // id to models vector index
+
+	u32 last{ 0 };
+
+	static constexpr u32 NULL_ID{ 0 }; // a 0 should map to invalid (the gameobject is removed)
 
 	Scene() {
 		models.reserve(64);
 	}
 
-	Model& GetById(unsigned int id) const {
-		assert(map.at(id) != nullptr);
-		return *map.at(id);
+	Model& __GetModelById(u32 id) {
+		assert(map.at(id) != NULL_ID);
+		return models[map.at(id) - 1];
 	}
 
 	GameObject Create() {
 		auto& model = models.emplace_back();
 		model.alive = true;
 
-		unsigned int index = static_cast<unsigned int>(models.size() - 1);
-		map[index] = &model;
+		// the new object will always be last
+		u32 newIndex = static_cast<u32>(models.size());
+		map[last] = newIndex;
 
-		return GameObject{ *this, index };
+		return GameObject{ *this, last++ };
 	}
 
-	void Destroy(GameObject& go) {
-		int index = go.id;
-		models.erase(models.begin() + index);
+	void Destroy(const GameObject& go) {
+		u32 mi = map.at(go.id) - 1; // model index
+		models.erase(models.begin() + mi);
 
-		map[index] = nullptr; // remap this one to nullptr
+		map[go.id] = NULL_ID;
 
-		// remap all the following ones to one less
-		for (size_t i = index + 1; i < map.size(); i++)
+		// loop through all map and remap every higher index
+		for (auto& pair : map)
 		{
-			map[i] = &models[i - 1];
+			if (pair.second > mi)
+				pair.second--;
 		}
+	}
+
+	GameObject GetById(u32 id)
+	{
+		assert(map.at(id) != NULL_ID);
+		return { *this, id };
 	}
 };
 
 Model& GameObject::Get()
 {
-	return scene.GetById(id);
+	return scene.__GetModelById(id);
 }
 
 void DebugScene(Scene& scene)
 {
-	std::cout << "IDs" << "\n";
+	std::cout << "----- DEBUG -----" << "\n";
+	std::cout << "\tIDs" << "\n";
 
 	for (size_t i = 0; i < scene.models.size(); i++)
 	{
-		std::cout << "Model: index: " << i << ", a= " << scene.models[i].a << ", b= " << scene.models[i].b << "\n";
+		std::cout << "\t\tModel: index: " << i << ", a = " << scene.models[i].a << ", b = " << scene.models[i].b << "\n";
 	}
 
-	std::cout << "MAP" << "\n";
+	std::cout << "\tMAP" << "\n";
 
 	for (auto& pair : scene.map)
 	{
-		std::cout << "id: " << pair.first << ", ptr= " << pair.second << "\n";
+		std::cout << "\t\tid: " << pair.first << ", ptr= " << pair.second << "\n";
 	}
 }
 
@@ -82,6 +98,7 @@ int main(int argc, char* argv[]) {
 	Scene scene;
 
 	auto go = scene.Create();
+
 	go.Get().a = 10;
 	go.Get().b = 20;
 
@@ -91,13 +108,29 @@ int main(int argc, char* argv[]) {
 	auto go3 = scene.Create();
 	go3.Get().a = 6;
 
-	for (size_t i = 0; i < 20; i++)
+	DebugScene(scene);
+
+	scene.Destroy(go2);
+
+	DebugScene(scene);
+
+	for (size_t i = 0; i < 5; i++)
 	{
 		auto _go = scene.Create();
 		_go.Get().a = 100 + i;
 	}
 
 	DebugScene(scene);
+
+	for (size_t i = 3; i < 6; i++)
+	{
+		GameObject _go = scene.GetById(i);
+		scene.Destroy(_go);
+	}
+
+	DebugScene(scene);
+
+	return EXIT_SUCCESS;
 
 	scene.Destroy(go2);
 
