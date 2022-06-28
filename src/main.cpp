@@ -54,7 +54,7 @@ struct Scene {
 		u32 mi = map.at(go.id) - 1; // model index
 		models.erase(models.begin() + mi);
 
-		map[go.id] = NULL_ID;
+		map.erase(go.id);
 
 		// loop through all map and remap every higher index
 		for (auto& pair : map)
@@ -90,7 +90,7 @@ void DebugScene(Scene& scene)
 
 	for (auto& pair : scene.map)
 	{
-		std::cout << "\t\tid: " << pair.first << ", ptr= " << pair.second << "\n";
+		std::cout << "\t\tid: " << pair.first << ", mi= " << pair.second << "\n";
 	}
 }
 
