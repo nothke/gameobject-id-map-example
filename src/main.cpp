@@ -3,6 +3,8 @@
 #include <vector>
 #include <map>
 
+#define SWAP_BACK
+
 using u32 = unsigned int;
 
 // This is our actual object that holds some data
@@ -36,8 +38,10 @@ struct Scene {
 
 	// Used only by the GameObject
 	Model& __GetModelById(u32 id) {
-		assert(map.at(id) != NULL_ID);
-		return models[map.at(id) - 1];
+		assert(map.contains(id)); // Attempting to reference dead object
+		assert(map.at(id) != NULL_ID); // Attempting to reference dead object
+
+		return models[static_cast<size_t>(map.at(id) - 1)];
 	}
 
 	// Creates a new GameObject in Scene
@@ -54,6 +58,8 @@ struct Scene {
 	// Removes a GameObject from this Scene
 	void Destroy(const GameObject& go) {
 		u32 mi = map.at(go.id) - 1; // model index
+
+#ifndef SWAP_BACK
 		models.erase(models.begin() + mi);
 
 		map.erase(go.id);
@@ -64,6 +70,28 @@ struct Scene {
 			if (pair.second > mi)
 				pair.second--;
 		}
+#else
+		// find which object id is the last model
+		// this is needed because we don't store id in the Model
+		u32 lastId = 0;
+		for (const auto& [id, i] : map)
+		{
+			if (i == models.size()) // no -1 because i is offset
+			{
+				lastId = id;
+				std::cout << "last id: " << id << " i: " << i << "\n";
+				break;
+			}
+		}
+
+		// swap deleted object with last
+		std::swap(models[mi], models.back());
+		models.pop_back();
+
+		map.erase(go.id);
+		std::cout << "setting id: " << lastId << " to: " << mi + 1 << "\n";
+		map[lastId] = mi + 1; // swap id of old last object
+#endif
 	}
 
 	GameObject GetById(u32 id)
@@ -112,11 +140,15 @@ int main(int argc, char* argv[]) {
 	auto go3 = scene.Create();
 	go3.Get().a = 6;
 
+	std::cout << "Created 3 objects\n";
 	DebugScene(scene);
 
 	// Destroy one object
 	scene.Destroy(go2);
 
+	go3.Get().a = 666;
+
+	std::cout << "Destroyed object 2\n";
 	DebugScene(scene);
 
 	// Creating some more objects
@@ -126,6 +158,7 @@ int main(int argc, char* argv[]) {
 		_go.Get().a = 100 + i;
 	}
 
+	std::cout << "Created 5 more objects\n";
 	DebugScene(scene);
 
 	// Removing objects
@@ -151,7 +184,19 @@ int main(int argc, char* argv[]) {
 		scene.Destroy(_go);
 	}
 
+	go3.Get().b = 12345;
+
 	DebugScene(scene);
+
+	auto go4 = scene.Create();
+	go4.Get().a = 32;
+	auto go4copy = go4;
+	go4copy.Get().b = 32;
+
+	DebugScene(scene);
+
+	scene.Destroy(go4);
+	//go4.Get().b = 12; // Uncommenting should error
 
 	return EXIT_SUCCESS;
 }
