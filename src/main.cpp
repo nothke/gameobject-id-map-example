@@ -17,7 +17,7 @@ struct Scene; // just a forward declaration necessary for GameObject
 
 // A trivially copiable wrapper to the Model
 struct GameObject {
-	Scene& scene;	// reference to the scene
+	Scene& scene;	// reference to the scene (this is not needed if you wish to call it with scene.Get(object))
 	u32 id{ 0 };	// maps into the map
 
 	Model& Get(); // just forward declared here necessary for Scene (implemented below Scene)
@@ -79,7 +79,6 @@ struct Scene {
 			if (i == models.size()) // no -1 because i is offset
 			{
 				lastId = id;
-				std::cout << "last id: " << id << " i: " << i << "\n";
 				break;
 			}
 		}
@@ -89,14 +88,15 @@ struct Scene {
 		models.pop_back();
 
 		map.erase(go.id);
-		std::cout << "setting id: " << lastId << " to: " << mi + 1 << "\n";
 		map[lastId] = mi + 1; // swap id of old last object
 #endif
 	}
 
 	GameObject GetById(u32 id)
 	{
-		assert(map.at(id) != NULL_ID);
+		assert(map.contains(id)); // Attempting to reference dead object
+		assert(map.at(id) != NULL_ID); // Attempting to reference dead object
+
 		return { *this, id };
 	}
 };
