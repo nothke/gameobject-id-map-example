@@ -46,7 +46,7 @@ struct Scene {
 
 	// Creates a new GameObject in Scene
 	GameObject Create() {
-		auto& model = models.emplace_back();
+		models.emplace_back();
 
 		// the new object will always be last
 		u32 newIndex = static_cast<u32>(models.size());
