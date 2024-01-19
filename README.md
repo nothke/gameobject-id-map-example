@@ -9,4 +9,10 @@ There are 3 classes:
 
 This example also uses a swap-back O(1) removal when destroying objects.
 
-There is a slight overhead when getting model data (compared to a raw pointer), but it is one of the most commonly used methods of working with game objects.
+There is a slight overhead when getting model data (compared to a raw pointer), but it is one of the most commonly used methods of working with game objects. You can also safely get a pointer to the Model directly and modify the data AS LONG as there are no structural changes between the two
+
+### Templateized
+
+`templateized` branch features a templateized version of this system, so it can be reused for other assets.
+
+GameObject and Scene are replaced by `PersistentReference<Model>` and `PersistentReferenceManager<Model>`, respectively. GameObject and Scene now just alias those, so user code doesn't change at all.
