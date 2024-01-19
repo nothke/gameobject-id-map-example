@@ -10,16 +10,18 @@ There are 3 classes:
 Now, the user can:
 ```c++
 // create 2 objects
-GameObject go = scene.Create(); 
+GameObject go1 = scene.Create(); 
 GameObject go2 = scene.Create();
 
-// change data with .Get().
-go.Get().a = 10; 
+// Access and change data with .Get().
+go1.Get().a = 10; 
 
-scene.Destroy(go);
+scene.Destroy(go1);
 
-//
+// Even though data of go2 has moved in memory, it can still be safely accessed
 go2.get().a = 20;
+
+go1.Get().a = 23 // OOOPS, error: accessing dead element!
 ```
 
 This example also uses a swap-back O(1) removal when destroying objects.
