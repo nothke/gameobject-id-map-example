@@ -1,7 +1,7 @@
 #include <iostream>
 #include <assert.h>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 #define SWAP_BACK
 
@@ -26,7 +26,7 @@ struct GameObject {
 // The object that holds our model and map
 struct Scene {
 	std::vector<Model> models; // this is our actual contiguous array of data
-	std::map<u32, u32> map; // a dictionary that maps ids to models vector index
+	std::unordered_map<u32, u32> map; // a dictionary that maps ids to models vector index
 
 	u32 last{ 0 }; // incremented to always provide a unique id for new objects
 
