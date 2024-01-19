@@ -1,7 +1,7 @@
 #include <iostream>
 #include <assert.h>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 #define SWAP_BACK
 
@@ -23,7 +23,7 @@ struct PersistentReference {
 template<typename T>
 struct PersistentReferenceManager {
 	std::vector<T> models; // this is our actual contiguous array of data
-	std::map<u32, u32> map; // a dictionary that maps ids to models vector index
+	std::unordered_map<u32, u32> map; // a dictionary that maps ids to models vector index
 
 	u32 last{ 0 }; // incremented to always provide a unique id for new objects
 
@@ -215,6 +215,9 @@ int main(int argc, char* argv[]) {
 		TextureManager textures;
 
 		auto tex = textures.Create();
+		tex.Get().handle = 5;
+
+		std::cout << "Texture: " << tex.Get().handle << "\n";
 	}
 
 	return EXIT_SUCCESS;
