@@ -9,7 +9,7 @@ There are 3 classes:
 
 This example also uses a swap-back O(1) removal when destroying objects.
 
-There is a slight overhead when getting model data (compared to a raw pointer), but it is one of the most commonly used methods of working with game objects. You can also safely get a pointer to the Model directly and modify the data AS LONG as there are no structural changes between the two
+There is a slight overhead when getting model data (compared to a raw pointer), but it is one of the most commonly used methods of working with game objects. You can also safely get a pointer to the Model directly and modify the data AS LONG as there are no structural changes between getting the pointer and using it.
 
 ### Templateized
 
