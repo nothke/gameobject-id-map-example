@@ -7,6 +7,21 @@
 
 using u32 = unsigned int;
 
+//template <typename T>
+//struct PersistentReferenceManager {
+//	T& GetPersistentReference(u32 id) = 0;
+//};
+
+template <typename T, typename ManagerT>
+struct PersistentReference {
+	ManagerT& manager;
+	u32 id{ 0 };
+
+	T& Get() {
+		return manager.GetPersistentReference(id);
+	}
+};
+
 // This is our actual object that holds some data
 struct Model {
 	int a{ 0 }, b{ 0 };
@@ -16,12 +31,15 @@ struct Model {
 struct Scene; // just a forward declaration necessary for GameObject
 
 // A trivially copiable wrapper to the Model
-struct GameObject {
-	Scene& scene;	// reference to the scene (this is not needed if you wish to call it with scene.Get(object))
-	u32 id{ 0 };	// maps into the map
+//struct GameObject {
+//	Scene& scene;	// reference to the scene (this is not needed if you wish to call it with scene.Get(object))
+//	u32 id{ 0 };	// maps into the map
+//
+//	Model& Get(); // just forward declared here necessary for Scene (implemented below Scene)
+//};
 
-	Model& Get(); // just forward declared here necessary for Scene (implemented below Scene)
-};
+struct Scene;
+using GameObject = PersistentReference<Model, Scene>;
 
 // The object that holds our model and map
 struct Scene {
@@ -42,6 +60,10 @@ struct Scene {
 		assert(map.at(id) != NULL_ID); // Attempting to reference dead object
 
 		return models[static_cast<size_t>(map.at(id) - 1)];
+	}
+
+	Model& GetPersistentReference(u32 id) {
+		return __GetModelById(id);
 	}
 
 	// Creates a new GameObject in Scene
@@ -101,10 +123,10 @@ struct Scene {
 	}
 };
 
-Model& GameObject::Get()
-{
-	return scene.__GetModelById(id);
-}
+//Model& GameObject::Get()
+//{
+//	return scene.__GetModelById(id);
+//}
 
 void DebugScene(Scene& scene)
 {
