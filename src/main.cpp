@@ -7,14 +7,12 @@
 
 using u32 = unsigned int;
 
-//template <typename T>
-//struct PersistentReferenceManager {
-//	T& GetPersistentReference(u32 id) = 0;
-//};
+template<typename T>
+struct PersistentReferenceManager;
 
-template <typename T, typename ManagerT>
+template <typename T>
 struct PersistentReference {
-	ManagerT& manager;
+	PersistentReferenceManager<T>& manager;
 	u32 id{ 0 };
 
 	T& Get() {
@@ -22,63 +20,45 @@ struct PersistentReference {
 	}
 };
 
-// This is our actual object that holds some data
-struct Model {
-	int a{ 0 }, b{ 0 };
-	float x{ 0 }, y{ 0 }, z{ 0 };
-};
-
-struct Scene; // just a forward declaration necessary for GameObject
-
-// A trivially copiable wrapper to the Model
-//struct GameObject {
-//	Scene& scene;	// reference to the scene (this is not needed if you wish to call it with scene.Get(object))
-//	u32 id{ 0 };	// maps into the map
-//
-//	Model& Get(); // just forward declared here necessary for Scene (implemented below Scene)
-//};
-
-struct Scene;
-using GameObject = PersistentReference<Model, Scene>;
-
-// The object that holds our model and map
-struct Scene {
-	std::vector<Model> models; // this is our actual contiguous array of data
+template<typename T>
+struct PersistentReferenceManager {
+	std::vector<T> models; // this is our actual contiguous array of data
 	std::map<u32, u32> map; // a dictionary that maps ids to models vector index
 
 	u32 last{ 0 }; // incremented to always provide a unique id for new objects
 
 	static constexpr u32 NULL_ID{ 0 }; // a 0 should map to invalid (the gameobject is removed)
 
-	Scene() {
-		models.reserve(12);
-	}
+	// to preallocate or not to preallocate?
+	//PersistentReferenceManager() {
+	//	models.reserve(12);
+	//}
 
 	// Used only by the GameObject
-	Model& __GetModelById(u32 id) {
+	T& __GetModelById(u32 id) {
 		assert(map.contains(id)); // Attempting to reference dead object
 		assert(map.at(id) != NULL_ID); // Attempting to reference dead object
 
 		return models[static_cast<size_t>(map.at(id) - 1)];
 	}
 
-	Model& GetPersistentReference(u32 id) {
+	T& GetPersistentReference(u32 id) {
 		return __GetModelById(id);
 	}
 
 	// Creates a new GameObject in Scene
-	GameObject Create() {
+	PersistentReference<T> Create() {
 		models.emplace_back();
 
 		// the new object will always be last
 		u32 newIndex = static_cast<u32>(models.size());
 		map[last] = newIndex;
 
-		return GameObject{ *this, last++ };
+		return PersistentReference<T>{ *this, last++ };
 	}
 
 	// Removes a GameObject from this Scene
-	void Destroy(const GameObject& go) {
+	void Destroy(const PersistentReference<T>& go) {
 		u32 mi = map.at(go.id) - 1; // model index
 
 #ifndef SWAP_BACK
@@ -114,7 +94,7 @@ struct Scene {
 #endif
 	}
 
-	GameObject GetById(u32 id)
+	PersistentReference<T> GetById(u32 id)
 	{
 		assert(map.contains(id)); // Attempting to reference dead object
 		assert(map.at(id) != NULL_ID); // Attempting to reference dead object
@@ -123,10 +103,21 @@ struct Scene {
 	}
 };
 
-//Model& GameObject::Get()
-//{
-//	return scene.__GetModelById(id);
-//}
+// This is our actual object that holds some data
+struct Model {
+	int a{ 0 }, b{ 0 };
+	float x{ 0 }, y{ 0 }, z{ 0 };
+};
+
+struct Texture {
+	u32 handle;
+};
+
+using GameObject = PersistentReference<Model>;
+using Scene = PersistentReferenceManager<Model>;
+
+using TextureAsset = PersistentReference<Texture>;
+using TextureManager = PersistentReferenceManager<Texture>;
 
 void DebugScene(Scene& scene)
 {
@@ -219,6 +210,12 @@ int main(int argc, char* argv[]) {
 
 	scene.Destroy(go4);
 	//go4.Get().b = 12; // Uncommenting should error
+
+	{
+		TextureManager textures;
+
+		auto tex = textures.Create();
+	}
 
 	return EXIT_SUCCESS;
 }
